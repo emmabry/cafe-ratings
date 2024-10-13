@@ -13,21 +13,39 @@ Bootstrap5(app)
 
 class CafeForm(FlaskForm):
     cafe = StringField('Cafe name', validators=[DataRequired()])
+    location = StringField('Cafe Location on Google Maps (URL)', validators=[URL()])
+    opening = StringField('Opening time', validators=[DataRequired()])
+    closing = StringField('Closing time', validators=[DataRequired()])
+    coffee_rating = SelectField('Coffee rating',
+                                choices=[('☕', '☕'), ('☕☕', '☕☕'), ('☕☕☕', '☕☕☕'), ('☕☕☕☕', '☕☕☕☕'),
+                                         ('☕☕☕☕☕', '☕☕☕☕☕')], validators=[DataRequired()])
+    wifi_rating = SelectField('Wifi strength rating',
+                              choices=[('None', 'None'), ('💪', '💪'), ('💪💪', '💪💪'), ('💪💪💪', '💪💪💪'),
+                                       ('💪💪💪💪', '💪💪💪💪'), ('💪💪💪💪💪', '💪💪💪💪💪')],
+                              validators=[DataRequired()])
+    power_socket = SelectField('Power socket availability', choices=[('None', 'None'), ('🔌', '🔌'), ('🔌🔌', '🔌🔌'),
+                                                                     ('🔌🔌🔌', "🔌🔌🔌"), ('🔌🔌🔌🔌', '🔌🔌🔌🔌'),
+                                                                     ('🔌🔌🔌🔌🔌', '🔌🔌🔌🔌🔌')],
+                               validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
-
-# all Flask routes below
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-@app.route('/add')
+@app.route('/add', methods=['GET', 'POST'])
 def add_cafe():
     form = CafeForm()
     if form.validate_on_submit():
-        print("True")
+        csv_data = list(form.data.values())[:7]
+        csv_string = ','.join(csv_data)
+        print(csv_string)
+        with open('cafe-data.csv', 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(csv_data)
+        return redirect(url_for('cafes'))
     return render_template('add.html', form=form)
 
 
@@ -38,7 +56,7 @@ def cafes():
         list_of_rows = []
         for row in csv_data:
             list_of_rows.append(row)
-    return render_template('cafes.html', cafes=list_of_rows)
+    return render_template('cafes.html', list_of_rows=list_of_rows)
 
 
 if __name__ == '__main__':
